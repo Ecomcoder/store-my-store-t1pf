@@ -70,10 +70,18 @@ function LoginForm() {
             />
           </div>
 
-          <div className="flex justify-end">
+          <div className="flex justify-between items-center">
+            {prefillEmail && (
+              <Link
+                href={`/auth/forgot-password?email=${encodeURIComponent(prefillEmail)}`}
+                className="text-xs font-semibold text-foreground underline underline-offset-4"
+              >
+                First time? Set your password
+              </Link>
+            )}
             <Link
-              href="/auth/forgot-password"
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              href={`/auth/forgot-password${prefillEmail ? `?email=${encodeURIComponent(prefillEmail)}` : ''}`}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors ml-auto"
             >
               Forgot password?
             </Link>

@@ -90,28 +90,43 @@ export function useAuth() {
           password,
         })
       } catch (error: any) {
-        // If identity exists, try logging in instead
-        if (error?.message?.includes('exists') || error?.status === 422) {
-          await medusaClient.auth.login('customer', 'emailpass', {
-            email,
-            password,
-          })
-        } else {
+        // If identity exists, that's fine — we'll login next
+        if (!error?.message?.includes('exists') && error?.status !== 422) {
           throw error
         }
       }
 
-      // Step 2: Create customer record (token is now in localStorage via SDK)
-      const { customer } = await medusaClient.store.customer.create({
-        first_name,
-        last_name,
+      // Step 2: Login to get JWT token (register doesn't return a token)
+      const token = await medusaClient.auth.login('customer', 'emailpass', {
         email,
+        password,
       })
 
-      return customer
+      if (typeof token !== 'string') {
+        throw new Error('Unexpected auth response after registration')
+      }
+
+      // Step 3: Create customer record (token is now in localStorage via SDK)
+      try {
+        const { customer } = await medusaClient.store.customer.create({
+          first_name,
+          last_name,
+          email,
+        })
+        return customer
+      } catch (error: any) {
+        // Customer record may already exist (e.g., guest checkout created it)
+        if (error?.status === 422 || error?.message?.includes('exists')) {
+          const { customer } = await medusaClient.store.customer.retrieve()
+          return customer
+        }
+        throw error
+      }
     },
     onSuccess: (customer) => {
       queryClient.setQueryData(['customer'], customer)
+      queryClient.invalidateQueries({ queryKey: ['orders'] })
+      queryClient.invalidateQueries({ queryKey: ['addresses'] })
     },
   })
 

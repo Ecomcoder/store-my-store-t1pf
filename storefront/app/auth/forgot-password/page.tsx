@@ -1,13 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { ArrowLeft, Mail, Loader2 } from 'lucide-react'
 import { medusaClient } from '@/lib/medusa-client'
 import { toast } from 'sonner'
 
-export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState('')
+function ForgotPasswordForm() {
+  const searchParams = useSearchParams()
+  const prefillEmail = searchParams.get('email') || ''
+
+  const [email, setEmail] = useState(prefillEmail)
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
 
@@ -102,5 +106,13 @@ export default function ForgotPasswordPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense fallback={<div className="container-custom py-section text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>}>
+      <ForgotPasswordForm />
+    </Suspense>
   )
 }
